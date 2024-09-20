@@ -1,0 +1,89 @@
+image:
+  repository: redash/redash
+  tag: 10.1.0.b50633
+  pullPolicy: IfNotPresent
+  env:
+  PYTHONUNBUFFERED: 0
+  secretKey: "redash-secret"
+  cookieSecret: "redash-cookie"
+# redash server config
+redash:
+  secretKey: "redash-secret"
+  cookieSecret: "redash-cookie"
+  webWorkers: "4"
+  logLevel: "INFO"
+  enabledQueryRunners: "redash.query_runner.python"
+
+server:
+  httpPort: 5000
+  env:
+    secretKey: "redash-secret"
+    cookieSecret: "redash-cookie"
+  replicaCount: 1
+
+service:
+  annotations: {}
+  loadBalancerIP:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/issuer: "your_issuer_name"
+    nginx.ingress.kubernetes.io/proxy-real-ip-cidr: "0.0.0.0/0"
+  ingressClassName: "nginx"
+  hosts:
+    - host: your_domain.example
+      paths:
+        - /
+  pathType: Prefix
+  tls:
+    - secretName: your_certificate_name
+      hosts:
+        - your_domain.example
+# redash workers config
+adhocWorker:
+  env:
+    QUEUES: "queries,celery,schemas,default,periodic"
+    WORKERS_COUNT: 4
+    secretKey: "redash-secret"
+    cookieSecret: "redash-cookie"
+  replicaCount: 1
+
+scheduledWorker:
+  env:
+    QUEUES: "scheduled_queries,schemas"
+    WORKERS_COUNT: 1
+    secretKey: "redash-secret"
+    cookieSecret: "redash-cookie"
+  replicaCount: 1
+
+scheduler:
+  env:
+    QUEUES: "celery"
+    WORKERS_COUNT: 1
+    secretKey: "redash-secret"
+    cookieSecret: "redash-cookie"
+  replicaCount: 1
+
+genericWorker:
+  env:
+    QUEUES: "periodic,emails,default"
+    WORKERS_COUNT: 1
+    secretKey: "redash-secret"
+    cookieSecret: "redash-cookie"
+  replicaCount: 1
+
+externalRedisSecret:
+  name: redash-redis-secret
+  key: connectionString
+externalPostgreSQLSecret:
+  name: redash-postgres-secret
+  key: connectionString
+
+#diable internal services
+postgresql:
+  enabled: false
+redis:
+  enabled: false
